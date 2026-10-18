@@ -1,0 +1,50 @@
+root@controlplane ~/code via 🐍 v3.12.3 (venv) ➜  python verify_environment.py 
+=================================================================
+vLLM Explained Lab - Environment Verification
+=================================================================
+
+[1/5] Checking Python virtual environment...
+  PASS - Virtual environment found at /root/venv
+
+[2/5] Checking required packages...
+  PASS - torch 2.11.0+cpu
+  PASS - transformers 5.20.1
+
+[3/5] Checking vLLM installation...
+  PASS - vllm 0.24.0+cpu (CPU build)
+
+[4/5] Checking additional packages...
+  PASS - gradio 5.50.0
+  PASS - aiohttp 3.14.5
+  PASS - requests 2.34.2
+
+[5/5] Downloading SmolLM-135M model...
+  This may take a minute on first run...
+  Downloading tokenizer for HuggingFaceTB/SmolLM-135M...
+  Downloading model for HuggingFaceTB/SmolLM-135M...
+Loading weights: 100%|█████████████████| 272/272 [00:00<00:00, 1942.06it/s]
+  PASS - Model downloaded in 1.0s
+  Model size: 135M parameters
+
+  Running quick test generation...
+  Test output: Hello, world!
+
+**Step 1: Understanding What a...
+  PASS - Model generates text successfully
+
+=================================================================
+ENVIRONMENT CHECK: 5/5 passed
+=================================================================
+
+All checks passed! Your environment is ready.
+
+Lab Scenario:
+  You are an ML engineer at InferenceIO.
+  Mission: Use vLLM to serve SmolLM to concurrent users.
+
+Next step: Run Task 1
+  python /root/code/task_1_hf_baseline.py
+
+Environment verification complete!
+
+root@controlplane ~/code via 🐍 v3.12.3 (venv) ➜  
