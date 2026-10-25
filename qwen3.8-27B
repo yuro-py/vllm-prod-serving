@@ -1,0 +1,42 @@
+1. start engine:-
+vllm serve Qwen/Qwen3.8-27B \
+    --dtype auto \
+    --gpu-memory-utilization 0.90 \
+    --max-model-len 8192 \
+    --port 8000
+
+2. hopper specific flags for maximum throughput:-
+vllm serve Qwen/Qwen3.8-27B \
+    --dtype auto \
+    --kv-cache-dtype fp8 \
+    --enable-chunked-prefill \
+    --max-num-batched-tokens 8192 \
+    --enable-prefix-caching \
+    --gpu-memory-utilization 0.95
+
+3.master benchmarking:-
+TTFT, TPOT, Tok/s
+
+vllm bench serve \
+  --backend vllm \
+  --model Qwen/Qwen3.8-27B \
+  --dataset-name sharegpt \
+  --num-prompts 1000 \
+  --request-rate 50
+
+increase "--request-rate" gradually and benchmark for each. when TTFT spikes, that's saturation point.
+
+
+
+
+
+-------------------
+MOE:-
+1. vllm serve Qwen/Qwen1.5-MoE-A2.7B \
+    --dtype auto \
+    --tensor-parallel-size 1 \
+    --max-model-len 4096
+
+2. Enable vLLM’s Prometheus metrics to make it production-ready:-
+vllm serve Qwen/Qwen3.8-27B --enable-prometheus-metrics --port 8000
+

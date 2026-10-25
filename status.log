@@ -1,0 +1,2 @@
+1792382474 status=error latency_ms=568 throughput_rps=50 queue_depth=13 gpu_util=30
+1792382476 status=success latency_ms=217 throughput_rps=137 queue_depth=3 gpu_util=62

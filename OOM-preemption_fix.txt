@@ -1,0 +1,35 @@
+OOM pre-emption fix isn't a single flag, instead majorly it bottles down to two core flags : "gpu_memory_utilization" and "max_num_seqs".
+
+"gpu_memory_utilization" allocates fixed total memory to vllm. "max_num_seqs" decides how fast to use the memory allowance.
+
+1. gpu_mem_util too high X max_num_seq too low = startup crash.
+2. gpu_mem_util too low X max_num_seq too high = inefficient concurrency
+
+
+TLDR for OOM preemption fix:-
+1. Tune both flags : increase gpu_mem_util if VRAM is sitting idle under workload. Lower max_num_seq and max_num_batched_tokens for OOM or RECOMPUTE warnings.2. Default gpu_mem_util in vLLM is 0.9.
+3. Automatic preemption mode : vLLM V1 defaults to "RECOMPUTE" because recomputing costs less than offloading to cpu "SWAP".
+4. CUDA graphs capture kv-cache global free block pool, and max_num_seq isnt part of it so OOM can hit even outside kv-cache locked in mem.
+5. watch out for "vllm:kv_cache_usage_perc" and "vllm:num_preemptions_total" post deployment.
+
+"gpu_memory_utilization":-
+H100 80GB VRAM. "0.9" from it is 72GB, that's what vllm gets in one instance : loading model weights, activation memory during forward pass, allotting empty kv pool, cuda graph capture(assuming enabled).
+
+precise weights for the model takes up as much space as it wants first, then comes cuda graphs, then activations and it scales with batch size. rest is filled gradually with kv-cache as required, all under 72GB.
+
+remaining 10%, or 8GB is reserved for safety margin against profiling errors.
+
+for an absolute number instead of fractions while distribution, use "kv_cache_memory_bytes" flag to specifically allot required kv-cache ignoring the "alot left over" principle of "gpu_mempory_utilization". use this for context-imp serving environments.
+
+
+
+-----------------------
+Two failure modes:-
+1. Startup OOM/crash "No available memory for cache blocks":-
+vLLM profiles gpu and fails to fetch more memory for required global free kv pools. if available, raise "gpu_memory_utilization" till a ceiling. reduce "max_model_len" so each sequence's "kv slot" becomes smaller. no point touching "max_num_seqs" cuz that happens after startup anyways.
+2. Runtime preemption : Gives the PreemptionMode.RECOMPUTE warning and the throughput cliff:-
+happens during runtime after few requests have been served and concurrency is piling up workload more than the GPU can handle so it evicts some kv-cache based upon time-added and priority to recompute them later. 
+recomputation is cheaper than swapping to cpu. 
+it will display in logs for the specific sequence's evicted kv-cache address. 
+server runs and requests are served, but latency increases and throughput decreases. 
+

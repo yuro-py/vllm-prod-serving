@@ -1,0 +1,33 @@
+kvc grows in five dimensions:-
+1. transformer layers
+2. number of kv_heads
+3. head_dim
+4. sequence length
+5. concurrent batch size
+
+KV_bytes = 2 × L × H_kv × D × S × B × bytes_per_element
+
+1. kv cache quantization:-
+kv tensors can be quantized to lower precision irrespective to the weight's precision cuz softmax handles the computation well.
+--kv-cache-dtype fp8 for hopper-class and above
+--kv-cache-dtype nvfp5 for blackwell-hardware
+
+2. cpu kvc offloading:-
+a. "--swap-space {gb}" in older versions.
+b. "--kv-offloading-backend native \
+  --kv-offloading-size 2" in newer versions.
+
+research more
+
+3. prefix caching:-
+Many production LLM workloads share a common prefix across requests: a long system prompt, a shared reference document in a RAG pipeline, or a conversation history. Without prefix caching, every request recomputes the KV cache for that prefix from scratch during prefill, which is the expensive step for long contexts.
+
+vLLM's built-in --enable-prefix-caching flag detects when a new request's prefix matches a previously-computed prefix and serves it from the in-memory cache. This is zero-configuration and applies within a single server session.
+
+4. GQA and FlashAttention : architecture level optimization
+gqa -> lesser number of kv-heads for multiple query-heads, which leads to immense reduction in kv-cache.
+fa -> avoids materializing the attention matrix in the HBM, instead it rewrites the kernel so it computes in tiles and keeps it in SRAM only and reduces memory read/write movements by 5-20x.
+
+gqa/mqa and fa are baked into models/engines.
+
+5. 
